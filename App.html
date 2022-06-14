@@ -1,24 +1,82 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title></title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
-<script>
-function isEmpty(obj)
-	{
-    if(typeof obj == "undefined" || obj == null || obj == "")
-	{
-        return true;
-    }
-		else
-	{
-        return false;
-    }
+ <meta charset="utf-8" />
+ <title></title>
+<style>
+.slidecontainer {
+    width: 90%;
 }
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+.slider:hover {
+    opacity: 1;
+}
+</style>
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+
+<script>
+
+	function isEmpty(obj)
+	{
+	    if(typeof obj == "undefined" || obj == null || obj == "")
+		{
+	        return true;
+	    }
+			else
+		{
+	        return false;
+	    }
+	}
+
+    function getWeight(val)
+    {
+    	// console.log(val);
+
+        var slider = document.getElementById(val);
+        var output = document.getElementById(val + "_Out");
+        output.innerHTML = slider.value;
+    }
+
+    function addSelectionText(val_1, val_2)
+    {
+    	// console.log(val);
+
+		var finalChar = document.getElementById("text_result").value;
+
+        var textSelect = val_1.options[val_1.selectedIndex].value;
+        var textWeight = val_2.value;
+
+        finalChar += textSelect;
+        finalChar += ":";        
+        finalChar += textWeight;
+        finalChar += " | ";
+
+		document.getElementById("text_result").value = finalChar;
+    }
+
+    function getRandomSelect(val)
+    {
+        var optGroupOptions = val.children;
+        var rand = Math.floor( Math.random() * optGroupOptions.length );
+        val.value = optGroupOptions[rand].value;
+    }
+
 </script>
+
 </head>
+
 <body>
    
       <h2>语义配置表指定</h2>
@@ -61,54 +119,64 @@ excel_file.addEventListener('change', (event) => {
 		 
 //		console.log(contentByRow.length);     //最大列数 - 1
 //		console.log(Object.keys(sheet_data[0]).length);
-		console.log(work_sheet);
+		// console.log(work_sheet);
 		
-
         if(sheet_data.length > 0)   //渲染表格
         {		
-            var table_output = '<table>';
+            var canvas_output = '<table width="800" cellspacing="2" cellpadding="5" frame=void rules=none>';
 			
 			//first colume
-            for(var col = 0; col < Object.keys(sheet_data[0]).length;  col++)  //col:列
-            {				
-                table_output += '<tr>';   	
-				table_output += '<td width=200>' + Object.keys(sheet_data[0])[col] + '</td>';  //第一行 第col列
-				
+            for(var col = 0; col < Object.keys(sheet_data[0]).length;  col++)  //Html table 行遍历
+            {
+            	var keyColume = Object.keys(sheet_data[0])[col];
+
+                canvas_output += '<tr>';   	
+				canvas_output += '<td bgcolor="#BB8FCE" width=80>' + Object.keys(sheet_data[0])[col] + '</td>';  //Html table 第一列
 								
-				table_output += '<td width=300><select>';   //select td start
 
-				var keyTmp = Object.keys(sheet_data[0])[col];
-				
 
+				canvas_output += '<td width=300><select name="' +keyColume+ '_select" id="' +keyColume+ '_select">';   //Html table 第二列
                 for(var row = 0; row < contentByRow.length; row++)
                 {
-					var valTmp = sheet_data[row][keyTmp];
+					var selectVal = sheet_data[row][keyColume];
 					
-                    if(isEmpty(valTmp))
+                    if(isEmpty(selectVal))
                     {					
 						break;
                     }
                     else
                     {
-						table_output += '<option value=' + valTmp + '>' + valTmp + '</option>'
+						canvas_output += '<option value="' + selectVal + '">' + selectVal + '</option>'
                     }
 
                 }
+				canvas_output += '</select></td>';		
 				
-				table_output += '</select></td>';//select td end
+				canvas_output += '<td>';  //Html table 第三列
+				canvas_output += '<td width="63">权重：<span id="weightRange' +keyColume+'_Out">5</span></td>';
+				canvas_output += '</td>';
+
+				canvas_output += '<td width="168"><div class="slidecontainer">';    //Html table 第四列
+				canvas_output += '<input type="range" min="0" max="5" value="5" class="slider" id="weightRange' +keyColume+ '" oninput="getWeight(this.id);">';
+				canvas_output += '</div></td>';
+
+				canvas_output += '<td width="51">';    //Html table 第五列
+				canvas_output += '<input type="button"  id="buttonAdd' +keyColume+ '" value="  +  " onclick="addSelectionText(' +keyColume+ '_select, weightRange' +keyColume+ ');">';
+				canvas_output += '</td>';				
 				
-				
-                table_output += '</tr>';				
+				canvas_output += '<td width="51">';    //Html table 第六列
+				canvas_output += '<input type="button" id="buttonRandom' +keyColume+ '"value="整列随机"   onclick="getRandomSelect(' +keyColume+ '_select);">';
+				canvas_output += '</td>';	
+
+
+                canvas_output += '</tr>';				
             }
 			
-			
-			
-			
-			
+            canvas_output += '</table>';
 
-            table_output += '</table>';
-			
-            document.getElementById('excel_data').innerHTML = table_output;
+            canvas_output += '<p><textarea id="text_result" name="w3review" rows="4" cols="200"></textarea></p>';
+
+            document.getElementById('excel_data').innerHTML = canvas_output;
         }
 		
 		
