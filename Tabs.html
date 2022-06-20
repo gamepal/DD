@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+
+<!-------------------标签Style------------------>
+<style>
+* {box-sizing: border-box}
+
+/* Set height of body and the document to 100% */
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: Arial;
+}
+
+/* Style tab links */
+.tablink {
+  background-color: #555;
+  color: white;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-size: 17px;
+  width: 25%;
+}
+
+.tablink:hover {
+  background-color: #777;
+}
+
+/* Style the tab content (and add height:100% for full page content) */
+.tabcontent {
+  color: white;
+  display: none;
+  padding: 100px 20px;
+  height: 100%;
+}
+
+#Home {background-color: DarkCyan;}
+#News {background-color: SteelBlue;}
+#Contact {background-color: RosyBrown;}
+#About {background-color: SlateGray;}
+</style>
+
+<!-------------------配表工具Style------------------>
+<style>
+.slidecontainer {
+    width: 90%;
+}
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+.slider:hover {
+    opacity: 1;
+}
+</style>
+
+
+<!-------------------配表工具 JS------------------>
+<script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+
+<script>
+
+  function isEmpty(obj)
+  {
+      if(typeof obj == "undefined" || obj == null || obj == "")
+    {
+          return true;
+      }
+      else
+    {
+          return false;
+      }
+  }
+
+    function getWeight(val)
+    {
+      // console.log(val);
+
+        var slider = document.getElementById(val);
+        var output = document.getElementById(val + "_Out");
+        output.innerHTML = slider.value;
+    }
+
+    function addSelectionText(val_1, val_2)
+    {
+      // console.log(val);
+
+    var finalChar = document.getElementById("text_result").value;
+
+        var textSelect = val_1.options[val_1.selectedIndex].value;
+        var textWeight = val_2.value;
+
+        finalChar += textSelect;
+        finalChar += ":";
+        finalChar += textWeight;
+        finalChar += " | ";
+
+    document.getElementById("text_result").value = finalChar;
+    }
+
+    function getRandomSelect(val)
+    {
+      var optGroupOptions = val.children;
+      var rand = Math.floor( Math.random() * optGroupOptions.length );
+      val.value = optGroupOptions[rand].value;
+    }
+
+    function ResetConfigToolTab()
+    {
+      if(document.getElementById('text_result') != null)
+        document.getElementById('text_result').value = "";
+    }
+
+
+</script>
+
+<!-------------------参数设置 JS------------------>
+
+<script>
+function ResetParameterTab()
+{
+  document.getElementById("pic_width").value = null;
+  document.getElementById("pic_height").value = null;
+  document.getElementById("pic_gen_step").value = null;
+  document.getElementById("pic_save_step").value = null; 
+  document.getElementById("save_gen_num").value = null; 
+
+  document.getElementById("pic_ref_file").value = null;
+  document.getElementById("pic_ref_weight").value = 0;
+
+  document.getElementById("pic_base_file").value = null;
+  document.getElementById("pic_similar").value = null;
+  document.getElementById("pic_interval").value = null;
+
+  document.getElementById("cBox_ViTB32").checked = 1;
+  document.getElementById("cBox_ViTB16").checked = 1;
+  document.getElementById("cBox_ViTL14").checked = 0;
+  document.getElementById("cBox_ViTL14_336").checked = 0;
+  document.getElementById("cBox_RN101").checked = 0;
+  document.getElementById("cBox_RN50").checked = 0; 
+  document.getElementById("cBox_RN50x4").checked = 0;
+  document.getElementById("cBox_RN50x16").checked = 0;
+  document.getElementById("cBox_RN50x64").checked = 0;
+
+  document.getElementById("text_to_dd").value = null;
+} 
+</script>
+</head>
+
+
+<body>
+<button class="tablink" onclick="openPage('Home', this, 'DarkCyan')" id="defaultOpen">配表工具</button>
+<button class="tablink" onclick="openPage('News', this, 'SteelBlue')">参数设置</button>
+<button class="tablink" onclick="openPage('Contact', this, 'RosyBrown')">启动应用</button>
+<button class="tablink" onclick="openPage('About', this, 'SlateGray')">使用帮助</button>
+
+<!-------------------标签 配表工具 页面------------------>
+<div id="Home" class="tabcontent">
+  <p>选择Excel配置表</p>
+  <input type="file" id="excel_file" />
+  <div id="excel_data"></div>  
+</div>
+
+<!-------------------标签 参数设置 页面------------------>
+<div id="News" class="tabcontent">
+<p>
+  <label for="number">图片宽度:</label>
+  <input type="number" name="number" id="pic_width">
+  <label for="number2">图片高度:</label>
+  <input type="number" name="number2" id="pic_height">
+</p>
+<p>
+  <label for="number3">生成步数:</label>
+  <input type="number" name="number3" id="pic_gen_step"> 
+  步
+</p>
+<p>
+  <label for="number4">保存步数:</label>
+  <input type="number" name="number4" id="pic_save_step"> 
+步</p>
+<p>
+  <label for="number5">生成数量:</label>
+  <input type="number" name="number5" id="save_gen_num"> 
+张</p>
+<p>
+  <label for="fileField">图片参考:</label>
+  <input type="file" name="fileField" id="pic_ref_file">
+  <label for="range">参考权重:</label>
+  <input type="range" id="points" name="points" min="0" max="10" step="1"  value="0" oninput="pic_ref_weight.value = this.value">
+  <output id="pic_ref_weight">0</output>
+</p>
+<p>
+  <label for="fileField2">基础图像:</label>
+  <input type="file" name="fileField2" id="pic_base_file">
+  <label for="number6">相似度:</label>
+  <input type="number" name="number6" id="pic_similar">
+
+  <label for="number7">跳过步骤:</label>
+  <input type="number" name="number7" id="pic_interval">
+</p>
+<p>高精模型</p>
+<p>
+  <input type="checkbox" name="checkbox" id="cBox_ViTB32" checked>
+  <label for="checkbox">ViTB32</label>
+  <input type="checkbox" name="checkbox2" id="cBox_ViTB16" checked>
+  <label for="checkbox2">ViTB16</label>
+  <input type="checkbox" name="checkbox3" id="cBox_ViTL14">
+  <label for="checkbox3">ViTL14</label>
+  <input type="checkbox" name="checkbox4" id="cBox_ViTL14_336">
+  <label for="checkbox4">ViTL14_336</label>
+  <input type="checkbox" name="checkbox5" id="cBox_RN101">
+  <label for="checkbox5">RN101</label>
+  <input type="checkbox" name="checkbox6" id="cBox_RN50">
+  <label for="checkbox6">RN50</label>
+  <input type="checkbox" name="checkbox7" id="cBox_RN50x4">
+  <label for="checkbox7">RN50x4</label> 
+  <input type="checkbox" name="checkbox8" id="cBox_RN50x16">
+  <label for="checkbox8">RN50x16</label>
+  <input type="checkbox" name="checkbox8" id="cBox_RN50x64">
+  <label for="checkbox8">RN50x64</label>  
+</p>
+
+<p>
+  <label for="textarea">内容表述:<br>
+  </label>
+  <textarea id="content" name="content" rows="10" cols="200"></textarea>
+</p>
+
+<p style="text-align:center;">
+<input type="button" name="button" id="button" value="重置默认" onclick="ResetParameterTab()">
+<button class="button" id="file_save">保存设置</button>
+</p>
+    <py-script output="News">
+import asyncio 
+import sys
+from js import alert, document, Object, window
+from pyodide import create_proxy, to_js
+
+async def file_save(event):
+  # Note: print() does not work in event handlers
+
+  try:
+    options = {
+      "startIn": "documents",
+      "suggestedName": "testfile.txt"
+    }
+
+    fileHandle = await window.showSaveFilePicker(Object.fromEntries(to_js(options)))
+  except Exception as e:
+    console.log('Exception: ' + str(e))
+    return
+
+  content = document.getElementById("content").value
+
+  file = await fileHandle.createWritable()
+  await file.write(content)
+  await file.close()
+  return
+
+def setup_button():
+  # Create a Python proxy for the callback function
+  file_save_proxy = create_proxy(file_save)
+
+  # Set the listener to the callback
+  document.getElementById("file_save").addEventListener("click", file_save_proxy, False)
+
+setup_button()
+    </py-script>   
+</div>
+
+
+
+
+
+<!-------------------标签 启动应用 页面------------------>
+<div id="Contact" class="tabcontent">
+<p>
+  <center><input type="image" name="imageField" id="imageField" src="progress.png"></center>
+</p>
+<p>
+<table width="1300"  frame=void rules=none>
+  <tbody>
+    <tr>
+      <td width="1000"></td>
+      <td width="10"><input type="button" name="button" id="button" value="开始"></td>
+      <td width="10"><input type="button" name="button2" id="button2" value="停止"></td>
+      <td width="10"><input type="button" name="button3" id="button3" value="打开保存路径"></td>
+    </tr>
+  </tbody>
+</table>
+</p>
+</div>
+
+<!-------------------标签 使用帮助 页面------------------>
+<div id="About" class="tabcontent">
+<h2><blockquote><blockquote><blockquote>艺术设计中心-GT美术部-GD组</h2>
+<table width="1202" height="344" border="1" frame=void rules=none>
+  <tbody>
+    <tr>
+      <td width="679" height="52"><blockquote>
+        <blockquote>
+          <blockquote>
+            <p><br>
+            </p>
+          </blockquote>
+        </blockquote>
+      </blockquote></td>
+      <td width="507">Disco Diffusion的Colab云端版本：
+      <input type="button" name="button" id="button" value="Button" onclick=" window.open('https://colab.research.google.com/github/alembics/disco-diffusion/blob/main/Disco_Diffusion.ipynb','_blank')"></td>
+    </tr>
+    <tr>
+      <td height="49"><blockquote>
+        <blockquote>
+          <blockquote>
+            <p>原画环节 赵子云<br>
+              zhaoziyun@corp.netease.com</p>
+          </blockquote>
+        </blockquote>
+      </blockquote></td>
+      <td>艺术风格合集网站：
+      <input type="button" name="button2" id="button2" value="Button" onclick=" window.open('https://weirdwonderfulai.art/resources/disco-diffusion-modifiers/','_blank')"></td>
+    </tr>
+    <tr>
+      <td height="54"><blockquote>
+        <blockquote>
+          <blockquote>
+            <p>工具环节 赵明<br>
+              zhaoming05@corp.netease.com</p>
+          </blockquote>
+        </blockquote>
+      </blockquote></td>
+      <td>艺术家风格合集网站：
+      <input type="button" name="button3" id="button3" value="Button" onclick=" window.open('https://weirdwonderfulai.art/resources/disco-diffusion-70-plus-artist-studies/','_blank')"></td>
+    </tr>
+    <tr>
+      <td height="40">&nbsp;</td>
+      <td>词汇搜索网站：
+      <input type="button" name="button4" id="button4" value="Button" onclick=" window.open('https://rom1504.github.io/clip-retrieval/?back=https%3A%2F%2Fknn5.laion.ai&index=laion5B&useMclip=false','_blank')"></td>
+    </tr>
+    <tr>
+      <td height="46">&nbsp;</td>
+      <td>艺术家反应查询网站：
+      <input type="button" name="button5" id="button5" value="Button" onclick=" window.open('https://docs.google.com/spreadsheets/d/14xTqtuV3BuKDNhLotB_d1aFlBGnDJOY0BRXJ8-86GpA/edit#gid=0','_blank')"></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>Disco Diffusion的Reddit论坛
+      <input type="button" name="button6" id="button6" value="Button" onclick=" window.open('https://www.reddit.com/r/DiscoDiffusion/','_blank')"></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+<!-------------------标签 JS------------------>
+<script>
+function openPage(pageName,elmnt,color) 
+{
+  ResetConfigToolTab();
+
+
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+
+  for (i = 0; i < tabcontent.length; i++) 
+  {
+    tabcontent[i].style.display = "none";
+  }
+
+  tablinks = document.getElementsByClassName("tablink");
+  for (i = 0; i < tablinks.length; i++) 
+  {
+    tablinks[i].style.backgroundColor = "";
+  }
+
+  document.getElementById(pageName).style.display = "block";
+  elmnt.style.backgroundColor = color;
+}
+
+// Get the element with id="defaultOpen" and click on it
+document.getElementById("defaultOpen").click();
+</script>
+
+
+<!-------------------配表工具 JS------------------>
+<script>
+const excel_file = document.getElementById('excel_file');
+
+excel_file.addEventListener('change', (event) => {
+
+    if(!['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'].includes(event.target.files[0].type))
+    {
+        document.getElementById('excel_data').innerHTML = 'only .xlsx or .xls file format are allowed';
+        excel_file.value = '';
+
+        return false;
+    }
+
+    var reader = new FileReader();
+
+    reader.readAsArrayBuffer(event.target.files[0]);  //读取首选文件
+
+    reader.onload = function(event){
+
+        var data = new Uint8Array(reader.result);
+        var work_book = XLSX.read(data, {type:'array'});  //以二进制流方式读取得到整份excel表格对象
+        var sheet_name = work_book.SheetNames;            //所有子表
+
+    var work_sheet = work_book.Sheets[sheet_name[0]];
+    var sheet_data = XLSX.utils.sheet_to_json(work_sheet);
+    
+    var contentByRow = XLSX.utils.sheet_to_row_object_array(work_book.Sheets[sheet_name[0]]);
+     
+    //console.log(contentByRow.length);     //最大列数 - 1
+    //console.log(Object.keys(sheet_data[0]).length);
+    //console.log(work_sheet);
+    
+        if(sheet_data.length > 0)   //渲染表格
+        {   
+            var canvas_output = '<table width="800" cellspacing="2" cellpadding="5" frame=void rules=none>';
+      
+      //first colume
+            for(var col = 0; col < Object.keys(sheet_data[0]).length;  col++)  //Html table 行遍历
+            {
+              var keyColume = Object.keys(sheet_data[0])[col];
+
+                canvas_output += '<tr>';    
+                canvas_output += '<td width=80>' + Object.keys(sheet_data[0])[col] + '</td>';  //Html table 第一列
+
+                canvas_output += '<td width=30><select name="' +keyColume+ '_select" id="' +keyColume+ '_select">';   //Html table 第二列
+                for(var row = 0; row < contentByRow.length; row++)
+                {
+                    var selectVal = sheet_data[row][keyColume];
+          
+                    if(isEmpty(selectVal))
+                    {         
+                      break;
+                    }
+                    else
+                    {
+                      canvas_output += '<option value="' + selectVal + '">' + selectVal + '</option>'
+                    }
+
+                }
+                canvas_output += '</select></td>';    
+                
+                canvas_output += '<td>';  //Html table 第三列
+                canvas_output += '<td width="80">权重：<span id="weightRange' +keyColume+'_Out">5</span></td>';
+                canvas_output += '</td>';
+
+                canvas_output += '<td width="168"><div class="slidecontainer">';    //Html table 第四列
+                canvas_output += '<input type="range" min="0" max="5" value="5" class="slider" id="weightRange' +keyColume+ '" oninput="getWeight(this.id);">';
+                canvas_output += '</div></td>';
+
+                canvas_output += '<td width="51">';    //Html table 第五列
+                canvas_output += '<input type="button"  id="buttonAdd' +keyColume+ '" value="  +  " onclick="addSelectionText(' +keyColume+ '_select, weightRange' +keyColume+ ');">';
+                canvas_output += '</td>';       
+                
+                canvas_output += '<td width="51">';    //Html table 第六列
+                canvas_output += '<input type="button" id="buttonRandom' +keyColume+ '"value="整列随机"   onclick="getRandomSelect(' +keyColume+ '_select);">';
+                canvas_output += '</td>'; 
+
+
+                canvas_output += '</tr>';       
+            }
+      
+            canvas_output += '</table>';
+
+            canvas_output += '<p><textarea id="text_result" name="w3review" rows="4" cols="200"></textarea></p>';
+
+            document.getElementById('excel_data').innerHTML = canvas_output;
+        }
+    
+    
+        excel_file.value = '';
+    }
+});
+</script>
+
+
+</body>
+</html> 
